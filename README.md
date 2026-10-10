@@ -8,8 +8,9 @@
 <img width="1409" height="959" alt="Screenshot 2026-10-10 at 15 26 23" src="https://github.com/user-attachments/assets/5a88efab-16be-491b-bb5e-269079443ae4" />
 
 <br />
-with preset and customized color option in Setting/Preference\
-This version is tested with Zotero 10 Mac (10.0.6).
+with preset and customized color option in Setting/Preference
+<br />
+**This version is tested with Zotero 10 Mac (10.0.6).**
 
 <br />
 
