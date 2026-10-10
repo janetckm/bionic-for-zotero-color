@@ -186,6 +186,18 @@ function setWindowPrefs(reader: _ZoteroTypes.ReaderInstance, win: Window) {
   win.__BIONIC_OPACITY_CONTRAST = getPref("opacityContrast") || 0;
   win.__BIONIC_WEIGHT_CONTRAST = getPref("weightContrast") || 0;
   win.__BIONIC_WEIGHT_OFFSET = getPref("weightOffset") || 0;
+  win.__BIONIC_ENABLE_COLORFUL = !!getPref("enableColorful");
+  win.__BIONIC_COLOR_MODE = (getPref("colorMode") as string) || "rainbow";
+  win.__BIONIC_COLOR_PALETTE = (getPref("colorPalette") as string) || "default";
+  {
+    const op = Number(getPref("colorOpacity"));
+    win.__BIONIC_COLOR_OPACITY = Number.isFinite(op) ? op : 1;
+  }
+  {
+    const sat = Number(getPref("colorSaturation"));
+    win.__BIONIC_COLOR_SATURATION = Number.isFinite(sat) ? sat : 1;
+  }
+  win.__BIONIC_CUSTOM_COLORS = (getPref("customColors") as string) || "[]";
 }
 
 function deleteWindowPrefs(win: Window) {
@@ -194,4 +206,10 @@ function deleteWindowPrefs(win: Window) {
   delete win.__BIONIC_OPACITY_CONTRAST;
   delete win.__BIONIC_WEIGHT_CONTRAST;
   delete win.__BIONIC_WEIGHT_OFFSET;
+  delete win.__BIONIC_ENABLE_COLORFUL;
+  delete win.__BIONIC_COLOR_MODE;
+  delete win.__BIONIC_COLOR_PALETTE;
+  delete win.__BIONIC_COLOR_OPACITY;
+  delete win.__BIONIC_COLOR_SATURATION;
+  delete win.__BIONIC_CUSTOM_COLORS;
 }

@@ -14,6 +14,12 @@ declare namespace _ZoteroTypes {
       "weightContrast": number;
       "weightOffset": number;
       "parsingOffset": number;
+      "enableColorful": boolean;
+      "colorMode": string;
+      "colorPalette": string;
+      "colorOpacity": number;
+      "colorSaturation": number;
+      "customColors": string;
     };
   }
 }

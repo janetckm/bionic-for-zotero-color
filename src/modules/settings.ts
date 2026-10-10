@@ -8,6 +8,12 @@ const PREFS_TO_OBSERVE = [
   "opacityContrast",
   "weightContrast",
   "weightOffset",
+  "enableColorful",
+  "colorMode",
+  "colorPalette",
+  "colorOpacity",
+  "colorSaturation",
+  "customColors",
 ];
 
 function initSettings() {

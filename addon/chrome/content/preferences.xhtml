@@ -98,6 +98,117 @@
     </hbox>
   </vbox>
 </groupbox>
+<groupbox id="__addonRef__-colorful">
+  <label><html:h2 data-l10n-id="colorful-title"></html:h2></label>
+  <checkbox
+    id="__addonRef__-enableColorful"
+    preference="__prefsPrefix__.enableColorful"
+    data-l10n-id="enableColorful"
+    native="true"
+  />
+  <hbox align="center">
+    <html:label
+      data-l10n-id="colorMode"
+      for="__addonRef__-colorMode"
+    ></html:label>
+    <html:select
+      id="__addonRef__-colorMode"
+      preference="__prefsPrefix__.colorMode"
+    >
+      <html:option value="rainbow" data-l10n-id="colorMode-rainbow"></html:option>
+      <html:option value="solid" data-l10n-id="colorMode-solid"></html:option>
+      <html:option value="alternating" data-l10n-id="colorMode-alternating"></html:option>
+      <html:option value="wordpos" data-l10n-id="colorMode-wordpos"></html:option>
+      <html:option value="custom" data-l10n-id="colorMode-custom"></html:option>
+    </html:select>
+  </hbox>
+  <hbox align="center">
+    <html:label
+      data-l10n-id="colorPalette"
+      for="__addonRef__-colorPalette"
+    ></html:label>
+    <html:select
+      id="__addonRef__-colorPalette"
+      preference="__prefsPrefix__.colorPalette"
+    >
+      <html:option value="default" data-l10n-id="colorPalette-default"></html:option>
+      <html:option value="pastel" data-l10n-id="colorPalette-pastel"></html:option>
+      <html:option value="vivid" data-l10n-id="colorPalette-vivid"></html:option>
+      <html:option value="mono" data-l10n-id="colorPalette-mono"></html:option>
+    </html:select>
+  </hbox>
+  <hbox align="center">
+    <html:label
+      data-l10n-id="colorOpacity"
+      for="__addonRef__-colorOpacity"
+    ></html:label>
+    <html:input
+      id="__addonRef__-colorOpacity"
+      preference="__prefsPrefix__.colorOpacity"
+      type="number"
+      min="0.1"
+      max="1"
+      step="0.1"
+    ></html:input>
+  </hbox>
+  <hbox align="center">
+    <html:label
+      data-l10n-id="colorSaturation"
+      for="__addonRef__-colorSaturation"
+    ></html:label>
+    <html:input
+      id="__addonRef__-colorSaturation"
+      preference="__prefsPrefix__.colorSaturation"
+      type="number"
+      min="0"
+      max="2"
+      step="0.1"
+    ></html:input>
+  </hbox>
+  <hbox id="__addonRef__-customColorRow" align="center">
+    <html:label
+      data-l10n-id="customColorsPickerTitle"
+      style="min-width: 110px"
+    ></html:label>
+    <hbox id="__addonRef__-customColorPickers" align="center">
+      <html:input
+        id="__addonRef__-customColor1"
+        type="color"
+        value="#c13b8c"
+      />
+      <html:input
+        id="__addonRef__-customColor2"
+        type="color"
+        value="#4a7fd6"
+      />
+      <html:input
+        id="__addonRef__-customColor3"
+        type="color"
+        value="#2f9e6d"
+      />
+    </hbox>
+  </hbox>
+  <hbox id="__addonRef__-customColorJsonRow" align="center" style="display: none">
+    <html:label
+      data-l10n-id="customColors"
+      for="__addonRef__-customColors"
+    ></html:label>
+    <html:input
+      id="__addonRef__-customColors"
+      preference="__prefsPrefix__.customColors"
+      data-l10n-id="customColorsInput"
+      type="text"
+    ></html:input>
+  </hbox>
+  <hbox
+    id="__addonRef__-customColorsWarning"
+    align="center"
+    style="display: none"
+  >
+    <html:img src="chrome://zotero/skin/20/universal/error.svg"></html:img>
+    <html:div data-l10n-id="customColorsInvalid"></html:div>
+  </hbox>
+</groupbox>
 <vbox id="__addonRef__-pluginInfo">
   <html:label
     data-l10n-id="pref-help"

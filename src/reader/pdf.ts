@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 import { wait } from "zotero-plugin-toolkit";
-import { computeFont } from "../utils/font";
+import { computeFont, computeColor } from "../utils/font";
 
 import type {
   PDFPage,
@@ -112,8 +112,20 @@ function patchCanvasGraphicsShowText(
     const weightContrast = window.__BIONIC_WEIGHT_CONTRAST || 1;
     const weightOffset = window.__BIONIC_WEIGHT_OFFSET || 0;
 
+    const colorfulEnabled = !!window.__BIONIC_ENABLE_COLORFUL;
+    const colorMode = (window.__BIONIC_COLOR_MODE as string) || "rainbow";
+    const colorPalette = (window.__BIONIC_COLOR_PALETTE as string) || "default";
+    const colorOpacity = Number(window.__BIONIC_COLOR_OPACITY);
+    const colorSaturation = Number(window.__BIONIC_COLOR_SATURATION);
+    const customColors = safeParseJSON(
+      (window.__BIONIC_CUSTOM_COLORS as string) || "[]",
+      [] as string[],
+    );
+
     const savedFont = this.ctx.font;
     const savedOpacity = this.ctx.globalAlpha;
+    const savedFillStyle = this.ctx.fillStyle as string;
+    const savedStrokeStyle = this.ctx.strokeStyle as string;
 
     const { bold, light } = computeFont({
       font: savedFont,
@@ -125,15 +137,53 @@ function patchCanvasGraphicsShowText(
 
     const newGlyphData = computeBionicGlyphs(glyphs);
 
-    for (const { glyphs: newG, isBold } of newGlyphData) {
+    // Deterministic segment hash for "wordpos" mode to be stable across re-renders
+    let glyphHash = 0;
+    for (let hi = 0; hi < Math.min(glyphs.length, 64); hi++) {
+      const g = glyphs[hi];
+      const v =
+        typeof g === "number" ? g : (g.unicode || " ").charCodeAt(0) || 0;
+      glyphHash = (glyphHash * 31 + v) | 0;
+    }
+
+    for (let sIdx = 0; sIdx < newGlyphData.length; sIdx++) {
+      const seg = newGlyphData[sIdx];
+      const newG = seg.glyphs;
+      const isBold = seg.isBold;
       this.ctx.font = isBold ? bold.font : light.font;
       // If use greater contrast is enabled, set text opacity to less than 1
       if (opacityContrast > 1 && !isBold) {
         this.ctx.globalAlpha = light.alpha;
       }
+
+      if (colorfulEnabled) {
+        const segmentKind = seg.segmentKind || (isBold ? "bold" : "light");
+        // segmentIndex: combine glyph-hash with segment index for stability
+        const segmentIndex = ((glyphHash + sIdx * 7) | 0) >>> 0;
+        const targetColor = computeColor({
+          segmentIndex,
+          wordIndex: seg.wordIndex ?? sIdx,
+          segmentKind,
+          mode: colorMode,
+          palette: colorPalette,
+          opacity: Number.isFinite(colorOpacity) ? colorOpacity : 1,
+          saturation: Number.isFinite(colorSaturation)
+            ? colorSaturation
+            : 1,
+          customColors,
+          fallbackColor: savedFillStyle,
+        });
+        this.ctx.fillStyle = targetColor;
+        this.ctx.strokeStyle = targetColor;
+      }
+
       original_showText.apply(this, buildArgs(newG));
       this.ctx.font = savedFont;
       this.ctx.globalAlpha = savedOpacity;
+      if (colorfulEnabled) {
+        this.ctx.fillStyle = savedFillStyle;
+        this.ctx.strokeStyle = savedStrokeStyle;
+      }
     }
 
     return undefined;
@@ -144,14 +194,19 @@ function patchCanvasGraphicsShowText(
   }
 }
 
-function computeBionicGlyphs(glyphs: Glyph[]) {
+interface BionicSegment {
+  glyphs: Glyph[];
+  isBold: boolean;
+  wordIndex: number;
+  segmentKind: "bold" | "light" | "separator";
+}
+
+function computeBionicGlyphs(glyphs: Glyph[]): BionicSegment[] {
   let wordStartIdx = NaN;
   let wordEndIdx = NaN;
   let word = "";
-  const newGlyphData: {
-    glyphs: Glyph[];
-    isBold: boolean;
-  }[] = [];
+  let currentWordIndex = 0;
+  const newGlyphData: BionicSegment[] = [];
 
   const parsingOffset = window.__BIONIC_PARSING_OFFSET || 0;
 
@@ -203,6 +258,8 @@ function computeBionicGlyphs(glyphs: Glyph[]) {
         newGlyphData.push({
           glyphs: glyphs.slice(i, i + 1),
           isBold: false,
+          wordIndex: currentWordIndex,
+          segmentKind: "separator",
         });
         continue;
       }
@@ -224,7 +281,10 @@ function computeBionicGlyphs(glyphs: Glyph[]) {
       newGlyphData.push({
         glyphs: glyphs.slice(wordStartIdx, wordEndIdx + 1),
         isBold: false,
+        wordIndex: currentWordIndex,
+        segmentKind: "light",
       });
+      currentWordIndex += 1;
       wordStartIdx = NaN;
       wordEndIdx = NaN;
       word = "";
@@ -275,15 +335,20 @@ function computeBionicGlyphs(glyphs: Glyph[]) {
     newGlyphData.push({
       glyphs: glyphs.slice(wordStartIdx, wordStartIdx + boldNumber),
       isBold: true,
+      wordIndex: currentWordIndex,
+      segmentKind: "bold",
     });
 
     if (wordStartIdx + boldNumber <= wordEndIdx) {
       newGlyphData.push({
         glyphs: glyphs.slice(wordStartIdx + boldNumber, wordEndIdx + 1),
         isBold: false,
+        wordIndex: currentWordIndex,
+        segmentKind: "light",
       });
     }
 
+    currentWordIndex += 1;
     wordStartIdx = NaN;
     wordEndIdx = NaN;
     word = "";
@@ -294,9 +359,40 @@ function computeBionicGlyphs(glyphs: Glyph[]) {
     newGlyphData.push({
       glyphs: glyphs.slice(wordStartIdx, wordStartIdx + glyphs.length),
       isBold: false,
+      wordIndex: currentWordIndex,
+      segmentKind: "light",
     });
   }
   return newGlyphData;
+}
+
+const MAX_CUSTOM_COLORS_READER = 3;
+
+function isValidCssColorReader(value: unknown): value is string {
+  if (typeof value !== "string" || !value.trim()) return false;
+  // Lightweight format check; Canvas fillStyle round-trip is not available in every
+  // worker/iframe context but the regex covers everything the preferences UI writes.
+  return (
+    /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(value) ||
+    /^rgba?\(\s*\d{1,3}%?\s*(,\s*\d{1,3}%?\s*){2}(,\s*[\d.]+%?\s*)?\)$/i.test(value) ||
+    /^hsla?\(\s*-?\d{1,3}\s*(,\s*\d{1,3}%\s*){2}(,\s*[\d.]+%?\s*)?\)$/i.test(value)
+  );
+}
+
+function safeParseJSON<T>(str: string, fallback: T): T {
+  try {
+    const parsed = JSON.parse(str) as unknown;
+    // If the caller expects a string array (customColors), filter and clamp.
+    if (Array.isArray(parsed)) {
+      const filtered = parsed
+        .filter(isValidCssColorReader)
+        .slice(0, MAX_CUSTOM_COLORS_READER);
+      return filtered as unknown as T;
+    }
+    return parsed as T;
+  } catch (e) {
+    return fallback;
+  }
 }
 
 function refresh() {

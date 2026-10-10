@@ -50,6 +50,43 @@
   padding: 6px;
 }
 
+#__addonRef__-colorful #__addonRef__-customColorRow,
+#__addonRef__-colorful #__addonRef__-customColorsWarning {
+  transition: opacity 0.15s ease;
+}
+
+#__addonRef__-colorful #__addonRef__-customColorsWarning {
+  padding-top: 4px;
+  opacity: 1;
+}
+
+#__addonRef__-colorful #__addonRef__-customColorsWarning img {
+  width: 20px;
+  height: 20px;
+  padding: 6px;
+}
+
+#__addonRef__-colorful.is-not-custom #__addonRef__-customColorRow {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+#__addonRef__-colorful #__addonRef__-customColorPickers input[type="color"] {
+  width: 48px;
+  height: 32px;
+  margin: 0 6px;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+#__addonRef__-colorful #__addonRef__-customColorPickers input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
 #__addonRef__-pluginInfo {
   padding-top: 28px;
 }
